@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+var REFRESH_TOKEN = '';
+var ACCESS_TOKEN = '';
+
+$(document).ready(function(){
+	$('#token').click(function(){
+		$.ajax({
+			url: 'http://localhost:8080/oauth/token?grant_type=password&username=user&password=user',
+			type: 'POST',
+			headers: {
+				'Authorization':'Basic bXktdHJ1c3RlZC1jbGllbnQ6c2VjcmV0'
+			},
+			success: function(data) {
+				REFRESH_TOKEN = data.refresh_token;
+				ACCESS_TOKEN = data.access_token;
+			}
+		});
+	});
+
+	function refreshToken() {
+		$.ajax({
+			url: 'http://localhost:8080/oauth/token?grant_type=refresh_token&refresh_token='+ REFRESH_TOKEN,
+			type: 'POST',
+			headers: {
+				'Authorization':'Basic bXktdHJ1c3RlZC1jbGllbnQ6c2VjcmV0'
+			},
+			success: function(data) {
+				REFRESH_TOKEN = data.refresh_token;
+				ACCESS_TOKEN = data.access_token;
+				alert('TOKEN REFRESHED!!');
+			}
+		});	
+	}
+
+	$("#hello").click(function(){
+		$.ajax({
+			url: 'http://localhost:8080/hello?access_token=' + ACCESS_TOKEN,
+			type: 'GET',
+			success: function(data) {
+				alert(JSON.stringify(data));
+			},
+			error: function(data) {
+				var error_description = data.responseJSON.error_description;
+				if (error_description && error_description.toLowerCase().indexOf("expired") >= 0) {
+					refreshToken();
+				} else {
+					alert("TRY LOGGING IN AGAIN!!");
+				}
+			}
+		});		
+	});
+
+	$("#logout").click(function(){
+		$.ajax({
+			url: 'http://localhost:8080/out?access_token=' + ACCESS_TOKEN,
+			type: 'GET',
+			success: function(data) {
+				alert(JSON.stringify(data));
+			}
+		});		
+	});
+});
+</script>
+</head>
+<body>
+
+<button id="token">token</button>
+<button id="hello">hello</button>
+<button id="logout">logout</button>
+
+</body>
+</html>
+
